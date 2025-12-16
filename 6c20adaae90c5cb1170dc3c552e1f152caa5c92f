@@ -1,0 +1,53 @@
+---
+date: '2025-12-15'
+deciders:
+- '@zircote'
+id: 20251215-use-multi-metric-evaluation-strategy
+status: accepted
+tags:
+- evaluation
+- metrics
+title: Use Multi-Metric Evaluation Strategy
+---
+
+# Use Multi-Metric Evaluation Strategy
+
+## Status
+
+Accepted
+
+## Context
+
+Evaluating code generation quality requires multiple perspectives. Options considered:
+
+1. **Test-based only** - Standard SWE-bench metric (fail-to-pass, pass-to-pass)
+2. **Diff similarity only** - Compare patches structurally
+3. **Combined metrics** - Tests + diff + extensible custom metrics
+
+## Decision
+
+Use **combined multi-metric evaluation** with plugin support.
+
+## Consequences
+
+### Positive
+- Nuanced understanding of partial success
+- Test-based gives functional correctness signal
+- Diff metrics catch semantic similarity even when tests differ
+- Plugin architecture allows domain-specific metrics
+- Enables richer analysis and comparison studies
+
+### Negative
+- More complex evaluation pipeline
+- Multiple metrics can be harder to summarize
+- Plugin development requires understanding the API
+
+### Neutral
+- Final pass/fail still uses SWE-bench criteria for comparability
+- Metrics stored in structured JSON for downstream analysis
+
+## Metrics Included
+
+1. **Test-based**: fail_to_pass_resolved, pass_to_pass_maintained
+2. **Diff-based**: exact_match, semantic_similarity, files_match, hunks_match
+3. **Custom**: MetricPlugin ABC for user-defined metrics
