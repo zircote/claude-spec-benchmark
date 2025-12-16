@@ -3,6 +3,8 @@ date: '2025-12-15'
 deciders:
 - '@zircote'
 id: 20251215-use-pydantic-for-data-models
+linked_commits:
+- be14872
 status: accepted
 tags:
 - architecture
