@@ -1,0 +1,52 @@
+---
+date: '2025-12-15'
+deciders:
+- '@zircote'
+id: 20251215-use-claude-code-cli-subprocess-for-code-generation
+status: accepted
+tags:
+- integration
+- claude
+title: Use Claude Code CLI Subprocess for Code Generation
+---
+
+# Use Claude Code CLI Subprocess for Code Generation
+
+## Status
+
+Accepted
+
+## Context
+
+We need to invoke Claude to generate patches for SWE-bench tasks. Options considered:
+
+1. **Anthropic API directly** - Use anthropic SDK with Messages API for maximum control
+2. **Claude Code CLI subprocess** - Spawn claude-code processes with task prompts
+3. **Both modes** - Support switching between API and CLI via configuration
+
+## Decision
+
+Use **Claude Code CLI subprocess** as the primary integration method.
+
+## Consequences
+
+### Positive
+- Tests agentic behavior (file operations, tool use, iterative refinement)
+- Leverages Claude Code's built-in capabilities (codebase understanding, edit tools)
+- More realistic evaluation of end-user experience
+- Simpler auth (uses existing claude-code authentication)
+
+### Negative
+- Less granular control over model parameters
+- Subprocess overhead vs direct API calls
+- Depends on claude-code CLI being installed
+
+### Neutral
+- Can add API mode later for comparison studies
+- Output parsing required to extract patches from responses
+
+## Implementation Notes
+
+- Uses asyncio.create_subprocess_exec (not shell) for security
+- Prompt written to file, passed via --input-file flag
+- 30-minute default timeout per task
