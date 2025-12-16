@@ -1,0 +1,53 @@
+---
+date: '2025-12-15'
+deciders:
+- '@zircote'
+id: 20251215-use-click-and-rich-for-cli-interface
+status: accepted
+tags:
+- cli
+- ux
+title: Use Click and Rich for CLI Interface
+---
+
+# Use Click and Rich for CLI Interface
+
+## Status
+
+Accepted
+
+## Context
+
+We need a CLI framework for the benchmark harness. Options considered:
+
+1. **argparse** - Standard library, basic functionality
+2. **Typer** - Modern, type-hint based, built on Click
+3. **Click + Rich** - Mature CLI framework with rich console output
+
+## Decision
+
+Use **Click** for CLI framework and **Rich** for console output.
+
+## Consequences
+
+### Positive
+- Click: Mature, well-documented, composable commands
+- Rich: Beautiful tables, progress bars, syntax highlighting
+- Consistent UX across all commands
+- Easy testing with CliRunner
+
+### Negative
+- Two dependencies vs Typer alone
+- Click decorators more verbose than Typer
+
+### Neutral
+- Commands: list, run, report, info
+- Rich Console for all output
+- Progress bars for long-running operations
+
+## CLI Structure
+
+- `claude-spec-benchmark list` - List available tasks
+- `claude-spec-benchmark run` - Execute benchmark
+- `claude-spec-benchmark report` - Generate reports
+- `claude-spec-benchmark info` - Display harness info
