@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 
 
 @pytest.fixture
-def cli_runner() -> "CliRunner":
+def cli_runner() -> CliRunner:
     """Provide a Click CLI test runner."""
     from click.testing import CliRunner
 
@@ -135,6 +135,6 @@ def mock_dataset() -> list[dict[str, Any]]:
             "test_patch": "",
             "version": "2.3",
             "FAIL_TO_PASS": '["test_route"]',
-            "PASS_TO_PASS": '[]',
+            "PASS_TO_PASS": "[]",
         },
     ]

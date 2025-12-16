@@ -12,9 +12,8 @@ from claude_spec_benchmark.models import (
     EvaluationResult,
     SWEBenchTask,
     TaskRun,
-    TaskStatus,
-    TestResult,
 )
+from claude_spec_benchmark.models import TestResult as TestResultModel
 
 
 class TestDiffMetrics:
@@ -195,7 +194,7 @@ class TestMetricPlugin:
                 self,
                 task: SWEBenchTask,
                 task_run: TaskRun,
-                test_results: list[TestResult],
+                test_results: list[TestResultModel],
             ) -> dict[str, Any]:
                 return {"custom_score": 42}
 
