@@ -74,19 +74,25 @@ class Evaluator:
         >>> print(metrics.result)
     """
 
+    # Default path for test results JSON file inside container
+    TEST_RESULTS_PATH = "/tmp/test_results.json"  # noqa: S108
+
     def __init__(
         self,
         docker_manager: DockerManager,
         metric_plugins: list[MetricPlugin] | None = None,
+        test_results_path: str | None = None,
     ) -> None:
         """Initialize evaluator.
 
         Args:
             docker_manager: Docker manager for running tests.
             metric_plugins: Optional custom metric plugins.
+            test_results_path: Custom path for test results file in container.
         """
         self._docker = docker_manager
         self._plugins = metric_plugins or []
+        self._test_results_path = test_results_path or self.TEST_RESULTS_PATH
 
     async def evaluate(
         self,
@@ -215,8 +221,12 @@ class Evaluator:
             gen_added = sum(p.added for p in gen_patchset)
             gen_removed = sum(p.removed for p in gen_patchset)
 
-            lines_added_match = min(gen_added, gold_added) / gold_added if gold_added else 1.0
-            lines_removed_match = min(gen_removed, gold_removed) / gold_removed if gold_removed else 1.0
+            lines_added_match = (
+                min(gen_added, gold_added) / gold_added if gold_added else 1.0
+            )
+            lines_removed_match = (
+                min(gen_removed, gold_removed) / gold_removed if gold_removed else 1.0
+            )
 
             # Hunk-level comparison
             gold_hunks = sum(len(list(p)) for p in gold_patchset)
@@ -275,11 +285,13 @@ class Evaluator:
         exit_code, stdout, stderr = await self._docker.run_command(
             container_id,
             [
-                "python", "-m", "pytest",
+                "python",
+                "-m",
+                "pytest",
                 "--tb=short",
                 "-v",
                 "--json-report",
-                "--json-report-file=/tmp/test_results.json",
+                f"--json-report-file={self._test_results_path}",
             ],
         )
 
@@ -287,18 +299,20 @@ class Evaluator:
         try:
             _, json_stdout, _ = await self._docker.run_command(
                 container_id,
-                ["cat", "/tmp/test_results.json"],
+                ["cat", self._test_results_path],
             )
             test_data = json.loads(json_stdout)
 
             for test in test_data.get("tests", []):
-                results.append(TestResult(
-                    test_name=test.get("nodeid", "unknown"),
-                    passed=test.get("outcome") == "passed",
-                    duration_seconds=test.get("duration", 0.0),
-                    output=test.get("call", {}).get("stdout", ""),
-                    error=test.get("call", {}).get("longrepr"),
-                ))
+                results.append(
+                    TestResult(
+                        test_name=test.get("nodeid", "unknown"),
+                        passed=test.get("outcome") == "passed",
+                        duration_seconds=test.get("duration", 0.0),
+                        output=test.get("call", {}).get("stdout", ""),
+                        error=test.get("call", {}).get("longrepr"),
+                    )
+                )
 
         except (json.JSONDecodeError, Exception) as e:
             logger.warning("Failed to parse test JSON: %s", e)
@@ -324,11 +338,13 @@ class Evaluator:
         for match in re.finditer(pattern, output):
             test_name = match.group(1)
             outcome = match.group(2)
-            results.append(TestResult(
-                test_name=test_name,
-                passed=outcome == "PASSED",
-                duration_seconds=0.0,
-            ))
+            results.append(
+                TestResult(
+                    test_name=test_name,
+                    passed=outcome == "PASSED",
+                    duration_seconds=0.0,
+                )
+            )
 
         return results
 
@@ -346,7 +362,8 @@ class Evaluator:
 
         try:
             # Try JSON format first
-            return json.loads(test_list_str)
+            result = json.loads(test_list_str)
+            return list(result) if isinstance(result, list) else []
         except json.JSONDecodeError:
             # Fall back to comma-separated
             return [t.strip() for t in test_list_str.split(",") if t.strip()]
@@ -366,11 +383,7 @@ class Evaluator:
             return True
 
         # Partial match (test name contains expected string)
-        for passed in passed_names:
-            if expected in passed:
-                return True
-
-        return False
+        return any(expected in passed for passed in passed_names)
 
     def _determine_result(
         self,
