@@ -13,6 +13,7 @@ import asyncio
 import json
 import logging
 from pathlib import Path
+from typing import Any
 
 import click
 from rich.console import Console
@@ -20,11 +21,13 @@ from rich.logging import RichHandler
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
 from claude_spec_benchmark.models import (
+    BenchmarkConfig,
     ElicitationMetrics,
     EvaluationMetrics,
     SDDBenchResult,
     SDDPhaseResult,
     SpecDegradationLevel,
+    SWEBenchTask,
 )
 
 console = Console()
@@ -95,13 +98,11 @@ def list_tasks(repo: str | None, limit: int) -> None:
     table.add_column("Repository", style="green")
     table.add_column("Version")
 
-    count = 0
-    for task in loader.iter_tasks(repos=[repo] if repo else None):
+    for count, task in enumerate(loader.iter_tasks(repos=[repo] if repo else None)):
         if count >= limit:
             console.print(f"\n[dim]...and {len(loader) - limit} more tasks[/dim]")
             break
         table.add_row(task.instance_id, task.repo, task.version or "-")
-        count += 1
 
     console.print(table)
 
@@ -126,7 +127,6 @@ def run(
     dry_run: bool,
 ) -> None:
     """Execute benchmark on SWE-bench tasks."""
-    from claude_spec_benchmark.models import BenchmarkConfig
     from claude_spec_benchmark.task_loader import TaskLoader
 
     # Parse task IDs
@@ -179,8 +179,8 @@ def run(
 
 
 async def _run_benchmark(
-    tasks: list,
-    config,
+    tasks: list[SWEBenchTask],
+    config: BenchmarkConfig,
     model: str | None,
 ) -> None:
     """Execute benchmark asynchronously."""
@@ -219,10 +219,9 @@ async def _run_benchmark(
                 container_id = await docker.create_task_container(task)
 
                 # Run Claude Code
-                task_run = await runner.run_task(
-                    task,
-                    Path("/tmp") / task.instance_id.replace("/", "-"),
-                )
+                # Use config output_dir for workspace to avoid hardcoded temp paths
+                task_workspace = config.output_dir / task.instance_id.replace("/", "-")
+                task_run = await runner.run_task(task, task_workspace)
 
                 # Apply generated patch if present
                 if task_run.generated_patch:
@@ -329,7 +328,7 @@ def degrade_cmd(
 
     # Format output
     if fmt == "json":
-        output_data = {
+        output_data: dict[str, Any] = {
             "degraded_text": result.degraded_text,
             "level": result.level.value,
             "seed": result.seed,
@@ -402,7 +401,10 @@ def sdd_run_cmd(
     Example:
         claude-spec-benchmark sdd run --framework passthrough --limit 10
     """
-    from claude_spec_benchmark.frameworks import ClaudeCodeFramework, PassthroughFramework
+    from claude_spec_benchmark.frameworks import (
+        ClaudeCodeFramework,
+        PassthroughFramework,
+    )
     from claude_spec_benchmark.runner import ClaudeCodeRunner
     from claude_spec_benchmark.sdd_runner import SDDBenchRunner
 
@@ -546,7 +548,7 @@ def sdd_report_cmd(
         return
 
     # Parse results
-    def parse_results(data_dict: dict, key: str) -> list[SDDBenchResult]:
+    def parse_results(data_dict: dict[str, Any], key: str) -> list[SDDBenchResult]:
         results = []
         for r in data_dict.get(key, []):
             # Handle enum conversion with error handling
