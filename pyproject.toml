@@ -1,0 +1,157 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "claude-spec-benchmark"
+dynamic = ["version"]
+description = "SWE-bench test harness for evaluating Claude's software engineering capabilities"
+readme = "README.md"
+license = {text = "MIT"}
+keywords = ["swe-bench", "claude", "benchmark", "evaluation", "testing"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.14",
+    "Typing :: Typed",
+]
+requires-python = ">=3.14"
+dependencies = [
+    "pydantic>=2.10.0",
+    "httpx>=0.28.0",
+    "rich>=13.9.0",
+    "click>=8.1.0",
+    "docker>=7.0.0",
+    "datasets>=3.0.0",
+    "gitpython>=3.1.0",
+    "unidiff>=0.7.0",
+    "aiofiles>=24.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=9.0.0",
+    "pytest-cov>=7.0.0",
+    "pytest-asyncio>=1.0.0",
+    "pytest-docker>=3.0.0",
+    "ruff>=0.14.0",
+    "mypy>=1.18.0",
+    "bandit>=1.8.0",
+    "pip-audit>=2.9.0",
+    "build>=1.0.0",
+    "types-aiofiles>=24.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/zircote/claude-spec-benchmark"
+Documentation = "https://github.com/zircote/claude-spec-benchmark#readme"
+Repository = "https://github.com/zircote/claude-spec-benchmark.git"
+"Bug Tracker" = "https://github.com/zircote/claude-spec-benchmark/issues"
+
+[project.scripts]
+claude-spec-benchmark = "claude_spec_benchmark.main:main"
+
+# UV/Astral dependency groups (modern tooling)
+[dependency-groups]
+dev = [
+    "pytest>=9.0.0",
+    "pytest-cov>=7.0.0",
+    "pytest-asyncio>=1.0.0",
+    "pytest-docker>=3.0.0",
+    "ruff>=0.14.0",
+    "mypy>=1.18.0",
+    "bandit>=1.8.0",
+    "pip-audit>=2.9.0",
+    "build>=1.0.0",
+    "types-aiofiles>=24.0.0",
+]
+
+# Hatch build configuration
+[tool.hatch.version]
+path = "src/claude_spec_benchmark/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/claude_spec_benchmark"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/claude_spec_benchmark/**/*.py"]
+
+# Ruff - Linting and Formatting
+[tool.ruff]
+target-version = "py314"
+line-length = 88
+src = ["src", "tests"]
+
+[tool.ruff.format]
+docstring-code-format = true
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # Pyflakes
+    "I",      # isort
+    "B",      # flake8-bugbear
+    "C4",     # flake8-comprehensions
+    "UP",     # pyupgrade
+    "ARG",    # flake8-unused-arguments
+    "SIM",    # flake8-simplify
+    "S",      # flake8-bandit (security)
+]
+ignore = ["E501"]  # line length handled by formatter
+
+[tool.ruff.lint.isort]
+known-first-party = ["claude_spec_benchmark"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101", "S105", "S106", "ARG001"]
+
+# mypy - Type Checking
+[tool.mypy]
+python_version = "3.14"
+strict = true
+warn_return_any = true
+warn_unused_ignores = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_configs = true
+show_error_codes = true
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+
+# pytest - Testing
+[tool.pytest]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = ["-ra", "--strict-markers", "--strict-config", "-v"]
+filterwarnings = ["error"]
+
+# Coverage
+[tool.coverage.run]
+source = ["src/claude_spec_benchmark"]
+branch = true
+omit = ["*/tests/*", "*/__pycache__/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+]
+fail_under = 80
+
+# Bandit - Security
+[tool.bandit]
+exclude_dirs = ["tests", ".venv", "venv"]
+skips = ["B101"]  # assert_used OK in tests

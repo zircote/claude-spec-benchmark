@@ -1,0 +1,15 @@
+# Default owners for everything in the repo
+* @zircote
+
+# CI/CD and GitHub configuration
+/.github/ @zircote
+
+# Core evaluation logic
+/src/ @zircote
+
+# Test infrastructure
+/tests/ @zircote
+
+# Documentation
+/docs/ @zircote
+*.md @zircote

@@ -1,0 +1,57 @@
+version: 2
+
+updates:
+  # Python dependencies (pip/uv)
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "America/New_York"
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "deps"
+    labels:
+      - "dependencies"
+      - "python"
+    groups:
+      dev-dependencies:
+        patterns:
+          - "ruff"
+          - "mypy"
+          - "bandit"
+          - "pytest*"
+          - "coverage*"
+        update-types:
+          - "minor"
+          - "patch"
+      typing:
+        patterns:
+          - "types-*"
+          - "mypy"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "America/New_York"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "ci"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    groups:
+      actions:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"

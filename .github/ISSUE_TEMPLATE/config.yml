@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Discussions
+    url: https://github.com/zircote/claude-spec-benchmark/discussions
+    about: Ask questions and share ideas in Discussions
+  - name: SWE-bench Documentation
+    url: https://www.swebench.com/
+    about: Official SWE-bench documentation and resources

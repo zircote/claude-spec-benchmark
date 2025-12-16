@@ -1,0 +1,87 @@
+.PHONY: help install install-dev test test-cov lint typecheck security coverage format format-check clean build quality
+
+.DEFAULT_GOAL := help
+
+help:  ## Show this help message
+	@echo '================================'
+	@echo 'claude-spec-benchmark - Make Targets'
+	@echo '================================'
+	@echo ''
+	@echo 'Usage: make [target]'
+	@echo ''
+	@echo 'Installation:'
+	@grep -E '^(install|install-dev):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-18s\033[0m %s\n", $$1, $$2}'
+	@echo ''
+	@echo 'Quality:'
+	@grep -E '^(quality|lint|typecheck|security|format|format-check):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-18s\033[0m %s\n", $$1, $$2}'
+	@echo ''
+	@echo 'Testing:'
+	@grep -E '^(test|test-cov|coverage):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-18s\033[0m %s\n", $$1, $$2}'
+	@echo ''
+	@echo 'Build:'
+	@grep -E '^(build|clean):.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-18s\033[0m %s\n", $$1, $$2}'
+	@echo ''
+
+install:  ## Install package
+	uv pip install -e .
+
+install-dev:  ## Install with dev dependencies
+	uv sync
+
+test:  ## Run tests
+	uv run pytest
+
+test-cov:  ## Run tests with coverage
+	uv run pytest --cov=claude_spec_benchmark --cov-report=html --cov-report=term-missing
+
+lint:  ## Run linter (ruff)
+	uv run ruff check src/ tests/
+
+typecheck:  ## Run type checker (mypy)
+	uv run mypy src/
+
+security:  ## Run security scan (bandit)
+	uv run bandit -r src/ -ll
+
+format:  ## Format code (ruff)
+	uv run ruff format src/ tests/
+	uv run ruff check --fix src/ tests/
+
+format-check:  ## Check formatting
+	uv run ruff format --check src/ tests/
+	uv run ruff check src/ tests/
+
+coverage:  ## Run tests with coverage threshold
+	uv run pytest --cov=claude_spec_benchmark --cov-report=term-missing --cov-fail-under=80
+
+quality:  ## Run all quality checks
+	@echo "Running quality checks..."
+	@echo ""
+	@echo "1. Formatting..."
+	@uv run ruff format src/ tests/
+	@uv run ruff check --fix src/ tests/
+	@echo "Formatting: PASS"
+	@echo ""
+	@echo "2. Linting..."
+	@uv run ruff check src/ tests/
+	@echo "Linting: PASS"
+	@echo ""
+	@echo "3. Type checking..."
+	@uv run mypy src/
+	@echo "Type checking: PASS"
+	@echo ""
+	@echo "4. Security..."
+	@uv run bandit -r src/ -ll -q
+	@echo "Security: PASS"
+	@echo ""
+	@echo "5. Tests with coverage..."
+	@uv run pytest --cov=claude_spec_benchmark --cov-report=term-missing --cov-fail-under=80 -q
+	@echo ""
+	@echo "ALL QUALITY CHECKS PASSED"
+
+build:  ## Build distribution packages
+	uv run python -m build
+
+clean:  ## Clean build artifacts
+	rm -rf build/ dist/ *.egg-info .pytest_cache .mypy_cache .ruff_cache htmlcov/ .coverage
+	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
