@@ -5,7 +5,6 @@ Loads tasks from HuggingFace datasets and provides filtering/iteration.
 
 import logging
 from collections.abc import Iterator
-from functools import lru_cache
 from typing import Any
 
 from datasets import Dataset, load_dataset
@@ -79,7 +78,6 @@ class TaskLoader:
             msg = f"Failed to load dataset: {e}"
             raise TaskLoadError(msg) from e
 
-    @lru_cache(maxsize=512)
     def get_task(self, instance_id: str) -> SWEBenchTask:
         """Get a specific task by instance ID.
 
@@ -94,8 +92,8 @@ class TaskLoader:
             ValidationError: If task data is invalid.
         """
         for row in self.dataset:
-            if row["instance_id"] == instance_id:  # type: ignore[index]
-                return self._row_to_task(row)  # type: ignore[arg-type]
+            if row["instance_id"] == instance_id:
+                return self._row_to_task(dict(row))
         msg = f"Task not found: {instance_id}"
         raise KeyError(msg)
 
@@ -116,8 +114,10 @@ class TaskLoader:
                 fail_to_pass=row.get("FAIL_TO_PASS", row.get("fail_to_pass", "")),
                 pass_to_pass=row.get("PASS_TO_PASS", row.get("pass_to_pass", "")),
             )
-        except ValidationError as e:
-            logger.exception("Invalid task data for %s", row.get("instance_id", "unknown"))
+        except ValidationError:
+            logger.exception(
+                "Invalid task data for %s", row.get("instance_id", "unknown")
+            )
             raise
 
     def iter_tasks(
@@ -138,7 +138,7 @@ class TaskLoader:
         repo_set = set(repos) if repos else None
 
         for row in self.dataset:
-            row_dict: dict[str, Any] = dict(row)  # type: ignore[arg-type]
+            row_dict: dict[str, Any] = dict(row)
             instance_id = row_dict["instance_id"]
             repo = row_dict["repo"]
 
@@ -157,16 +157,16 @@ class TaskLoader:
         """Get unique repository names in the dataset."""
         repos: set[str] = set()
         for row in self.dataset:
-            repos.add(row["repo"])  # type: ignore[index]
+            repos.add(row["repo"])
         return sorted(repos)
 
     def list_task_ids(self, repo: str | None = None) -> list[str]:
         """Get all task IDs, optionally filtered by repo."""
         ids: list[str] = []
         for row in self.dataset:
-            if repo and row["repo"] != repo:  # type: ignore[index]
+            if repo and row["repo"] != repo:
                 continue
-            ids.append(row["instance_id"])  # type: ignore[index]
+            ids.append(row["instance_id"])
         return ids
 
     def __len__(self) -> int:

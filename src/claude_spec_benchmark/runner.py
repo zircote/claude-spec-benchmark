@@ -86,22 +86,26 @@ class ClaudeCodeRunner:
         ]
 
         if task.hints_text:
-            prompt_parts.extend([
-                "",
-                "## Hints",
-                task.hints_text,
-            ])
+            prompt_parts.extend(
+                [
+                    "",
+                    "## Hints",
+                    task.hints_text,
+                ]
+            )
 
-        prompt_parts.extend([
-            "",
-            "## Instructions",
-            "1. Analyze the problem and understand what needs to be fixed",
-            "2. Make the minimal changes necessary to solve the issue",
-            "3. Generate a unified diff patch that can be applied with `git apply`",
-            "4. Output ONLY the patch, starting with `diff --git`",
-            "",
-            "Generate the patch now:",
-        ])
+        prompt_parts.extend(
+            [
+                "",
+                "## Instructions",
+                "1. Analyze the problem and understand what needs to be fixed",
+                "2. Make the minimal changes necessary to solve the issue",
+                "3. Generate a unified diff patch that can be applied with `git apply`",
+                "4. Output ONLY the patch, starting with `diff --git`",
+                "",
+                "Generate the patch now:",
+            ]
+        )
 
         return "\n".join(prompt_parts)
 
@@ -249,9 +253,7 @@ class ClaudeCodeRunner:
                     or line.startswith("index ")
                     or line.startswith("new file mode")
                     or line.startswith("deleted file mode")
-                ):
-                    patch_lines.append(line)
-                elif line.strip() == "":
+                ) or line.strip() == "":
                     patch_lines.append(line)
                 else:
                     # Non-patch line ends the patch
