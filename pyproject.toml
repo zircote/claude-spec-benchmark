@@ -41,7 +41,7 @@ dev = [
     "bandit>=1.8.0",
     "pip-audit>=2.9.0",
     "build>=1.0.0",
-    "types-aiofiles>=24.0.0",
+    "types-aiofiles>=25.1.0.20260409",
 ]
 
 [project.urls]
@@ -65,7 +65,7 @@ dev = [
     "bandit>=1.8.0",
     "pip-audit>=2.9.0",
     "build>=1.0.0",
-    "types-aiofiles>=24.0.0",
+    "types-aiofiles>=25.1.0.20260409",
 ]
 
 # Hatch build configuration
